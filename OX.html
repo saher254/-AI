@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لعبة إكس أوه مع خط الفوز</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f172a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        h1 { margin: 5px 0; font-size: 24px; color: #38bdf8; }
+        #status { font-size: 18px; margin-bottom: 15px; color: #f1f5f9; height: 25px; }
+        
+        .board-container {
+            position: relative;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 90px);
+            grid-template-rows: repeat(3, 90px);
+            gap: 10px;
+            background-color: #1e293b;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        .cell {
+            background-color: #334155;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .cell.x { color: #38bdf8; }
+        .cell.o { color: #f43f5e; }
+        .cell.winning-cell {
+            transform: scale(1.08);
+            background-color: #1e3a5f;
+        }
+        
+        /* خط الفوز */
+        #winning-line {
+            position: absolute;
+            background-color: #fbbf24;
+            height: 6px;
+            border-radius: 3px;
+            transform-origin: center left;
+            transition: width 0.4s ease-in-out;
+            pointer-events: none;
+            box-shadow: 0 0 12px #fbbf24;
+            width: 0;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #38bdf8;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:active { background-color: #0284c7; }
+    </style>
+</head>
+<body>
+
+    <h1>لعبة إكس أوه ❌ ⭕</h1>
+    <div id="status">دور اللاعب: <span style="color:#38bdf8">X</span></div>
+
+    <div class="board-container">
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        <div id="winning-line"></div>
+    </div>
+
+    <button onclick="restartGame()">إعادة اللعب</button>
+
+    <script>
+        const cells = document.querySelectorAll('.cell');
+        const statusText = document.querySelector('#status');
+        const winningLine = document.getElementById('winning-line');
+        const board = document.getElementById('board');
+        
+        let options = ["", "", "", "", "", "", "", "", ""];
+        let currentPlayer = "X";
+        let running = true;
+
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // صفوف افقية
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // أعمدة رأسية
+            [0, 4, 8], [2, 4, 6]             // أقطار
+        ];
+
+        cells.forEach(cell => cell.addEventListener('click', cellClicked));
+
+        function cellClicked() {
+            const cellIndex = this.getAttribute('data-index');
+
+            if (options[cellIndex] !== "" || !running) return;
+
+            updateCell(this, cellIndex);
+            checkWinner();
+        }
+
+        function updateCell(cell, index) {
+            options[index] = currentPlayer;
+            cell.textContent = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase());
+        }
+
+        function changePlayer() {
+            currentPlayer = (currentPlayer === "X") ? "O" : "X";
+            const color = currentPlayer === "X" ? "#38bdf8" : "#f43f5e";
+            statusText.innerHTML = `دور اللاعب: <span style="color:${color}">${currentPlayer}</span>`;
+        }
+
+        function checkWinner() {
+            let roundWon = false;
+            let winningCombo = null;
+
+            for (let i = 0; i < winConditions.length; i++) {
+                const condition = winConditions[i];
+                const cellA = options[condition[0]];
+                const cellB = options[condition[1]];
+                const cellC = options[condition[2]];
+
+                if (cellA === "" || cellB === "" || cellC === "") continue;
+                if (cellA === cellB && cellB === cellC) {
+                    roundWon = true;
+                    winningCombo = condition;
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                statusText.textContent = `الفائز هو اللاعب ${currentPlayer}! 🎉`;
+                running = false;
+                drawWinningLine(winningCombo);
+            } else if (!options.includes("")) {
+                statusText.textContent = `تعادل! 🤝`;
+                running = false;
+            } else {
+                changePlayer();
+            }
+        }
+
+        function drawWinningLine(combo) {
+            // تكبير المربعات الفائزة
+            combo.forEach(index => cells[index].classList.add('winning-cell'));
+
+            const cellA = cells[combo[0]].getBoundingClientRect();
+            const cellC = cells[combo[2]].getBoundingClientRect();
+            const boardRect = board.getBoundingClientRect();
+
+            // حساب النقاط بالنسبة للوحة اللعب
+            const startX = (cellA.left + cellA.width / 2) - boardRect.left;
+            const startY = (cellA.top + cellA.height / 2) - boardRect.top;
+            const endX = (cellC.left + cellC.width / 2) - boardRect.left;
+            const endY = (cellC.top + cellC.height / 2) - boardRect.top;
+
+            const distance = Math.hypot(endX - startX, endY - startY);
+            const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
+
+            // موقع وزاوية الخط
+            winningLine.style.left = `${startX}px`;
+            winningLine.style.top = `${startY}px`;
+            winningLine.style.transform = `rotate(${angle}deg)`;
+            
+            // إضافة مظهر التفاعل (Animation)
+            requestAnimationFrame(() => {
+                winningLine.style.width = `${distance}px`;
+            });
+        }
+
+        function restartGame() {
+            currentPlayer = "X";
+            options = ["", "", "", "", "", "", "", "", ""];
+            statusText.innerHTML = `دور اللاعب: <span style="color:#38bdf8">X</span>`;
+            
+            winningLine.style.width = '0px';
+            
+            cells.forEach(cell => {
+                cell.textContent = "";
+                cell.classList.remove('x', 'o', 'winning-cell');
+            });
+            running = true;
+        }
+    </script>
+</body>
+</html>
