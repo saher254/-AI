@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#2563eb">
+<title>تسجيل البيانات - ساهر</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; padding:16px;
+  font-family:Arial,Tahoma,sans-serif;
+  background:linear-gradient(145deg,#0f172a,#1d4ed8,#38bdf8);
+  display:flex;align-items:center;justify-content:center;
+}
+.card{
+  width:100%;max-width:430px;background:#fff;border-radius:28px;
+  padding:25px 20px 22px;box-shadow:0 20px 50px rgba(0,0,0,.28)
+}
+.logo{
+  width:70px;height:70px;margin:auto;border-radius:22px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#2563eb,#06b6d4);
+  color:#fff;font-size:30px;font-weight:900
+}
+h1{text-align:center;color:#0f172a;font-size:25px;margin:14px 0 7px}
+.sub{text-align:center;color:#64748b;font-size:14px;margin-bottom:24px}
+.field{margin-bottom:15px}
+label{display:block;font-weight:bold;color:#334155;margin-bottom:7px;font-size:14px}
+input{
+ width:100%;height:55px;border:2px solid #e2e8f0;border-radius:15px;
+ padding:0 15px;background:#f8fafc;font-size:16px;outline:none
+}
+input:focus{border-color:#2563eb;background:#fff;box-shadow:0 0 0 4px #2563eb18}
+button{
+ width:100%;height:56px;border:0;border-radius:16px;
+ background:linear-gradient(135deg,#2563eb,#0891b2);
+ color:#fff;font-size:17px;font-weight:bold
+}
+button:disabled{opacity:.65}
+#msg{display:none;margin-top:16px;padding:16px;border-radius:15px;text-align:center;font-weight:bold;line-height:1.7}
+.ok{display:block!important;background:#dcfce7;color:#166534;border:1px solid #86efac}
+.bad{display:block!important;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.footer{text-align:center;color:#94a3b8;font-size:12px;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">س</div>
+  <h1>تسجيل البيانات</h1>
+  <div class="sub">املأ البيانات التالية ثم اضغط إرسال</div>
+
+  <form id="form" action="https://formspree.io/f/xkjgpywd" method="POST">
+    <input type="hidden" name="subject" value="بيانات جديدة - ساهر">
+    <input type="hidden" name="_gotcha" value="">
+
+    <div class="field">
+      <label for="name">الاسم الكامل</label>
+      <input id="name" name="name" type="text" placeholder="اكتب اسمك هنا"
+             autocomplete="name" required>
+    </div>
+
+    <div class="field">
+      <label for="email">البريد الإلكتروني</label>
+      <input id="email" name="email" type="email" placeholder="example@email.com"
+             autocomplete="email" required>
+    </div>
+
+    <div class="field">
+      <label for="phone">رقم الموبايل</label>
+      <input id="phone" name="phone" type="tel" inputmode="numeric"
+             placeholder="01xxxxxxxxx" maxlength="11" pattern="[0-9]{11}" required>
+    </div>
+
+    <button id="btn" type="submit">إرسال البيانات</button>
+    <div id="msg"></div>
+  </form>
+
+  <div class="footer">ساهر دوت كوم</div>
+</div>
+
+<script>
+const form=document.getElementById("form");
+const btn=document.getElementById("btn");
+const msg=document.getElementById("msg");
+
+form.addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  btn.disabled=true;
+  btn.textContent="جاري إرسال البيانات...";
+  msg.className="";
+  msg.textContent="";
+
+  try{
+    const res=await fetch(form.action,{
+      method:"POST",
+      body:new FormData(form),
+      headers:{Accept:"application/json"}
+    });
+
+    if(!res.ok) throw new Error("failed");
+
+    form.reset();
+    msg.className="ok";
+    msg.innerHTML="✅ تم إرسال البيانات إلى ساهر<br>تم استلام طلبك بنجاح";
+  }catch(err){
+    msg.className="bad";
+    msg.innerHTML="❌ لم يتم الإرسال<br>تأكد من اتصال الإنترنت وحاول مرة أخرى";
+  }finally{
+    btn.disabled=false;
+    btn.textContent="إرسال البيانات";
+  }
+});
+</script>
+</body>
+</html>
